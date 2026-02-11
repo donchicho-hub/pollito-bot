@@ -72,7 +72,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
       return interaction.reply({
         embeds: [cooldownEmbed],
-        ephemeral: true
+        flags: 64
       });
     }
   }
