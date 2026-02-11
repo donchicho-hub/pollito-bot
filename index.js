@@ -36,12 +36,26 @@ client.once(Events.ClientReady, async () => {
 
     const row = new ActionRowBuilder().addComponents(button);
 
-    await buttonChannel.send({
-      content: '🐥 **¿Quieres que se abra el servidor de Aternos?**\nPresiona el botón de abajo 👇',
-      components: [row]
-    });
+    // 🔍 Revisar si ya existe un botón enviado por el bot
+    const messages = await buttonChannel.messages.fetch({ limit: 20 });
 
-    console.log('✅ Botón enviado al canal abrir-servidor');
+    const existing = messages.find(
+      msg =>
+        msg.author.id === client.user.id &&
+        msg.components.length > 0
+    );
+
+    if (existing) {
+      console.log('⚠️ Ya existe un botón en abrir-servidor, no envío otro.');
+    } else {
+      await buttonChannel.send({
+        content: '🐥 **¿Quieres que se abra el servidor de Aternos?**\nPresiona el botón de abajo 👇',
+        components: [row]
+      });
+
+      console.log('✅ Botón enviado al canal abrir-servidor');
+    }
+
   } catch (err) {
     console.error('❌ Error enviando el botón:', err);
   }
@@ -72,14 +86,14 @@ client.on(Events.InteractionCreate, async interaction => {
 
       return interaction.reply({
         embeds: [cooldownEmbed],
-        flags: 64
+        flags: 64 // nuevo sistema ephemeral
       });
     }
   }
 
   cooldowns.set(userId, now);
 
-  // 🟢 Embed verde que va al canal de estatus
+  // 🟢 Enviar embed al canal de estatus
   const statusChannel = await client.channels.fetch(STATUS_CHANNEL_ID);
 
   const embed = new EmbedBuilder()
@@ -97,12 +111,13 @@ client.on(Events.InteractionCreate, async interaction => {
     embeds: [embed]
   });
 
-  // Confirmación privada en canal del botón
+  // ✅ Confirmación privada
   await interaction.reply({
     content: '✅ Tu solicitud fue enviada correctamente.',
-    ephemeral: true
+    flags: 64
   });
 });
 
 // 🔑 LOGIN SIEMPRE AL FINAL
 client.login(process.env.TOKEN);
+
