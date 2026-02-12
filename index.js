@@ -1,4 +1,5 @@
 require('dotenv').config();
+const fs = require('fs');
 
 const {
   Client,
@@ -15,50 +16,54 @@ const client = new Client({
 });
 
 // 🔧 CONFIGURACIÓN
-const BUTTON_CHANNEL_ID = '1470936514463662354'; // 📩 abrir-servidor
-const STATUS_CHANNEL_ID = '1470980480055775242'; // 📩 estatus-servidor
+const BUTTON_CHANNEL_ID = '1470936514463662354';
+const STATUS_CHANNEL_ID = '1470980480055775242';
 const COOLDOWN_MINUTES = 30;
 
-// 🧠 Memoria simple para cooldowns
 const cooldowns = new Map();
+const BUTTON_DATA_FILE = './button.json';
 
 client.once(Events.ClientReady, async () => {
   console.log(`🐥 Pollito está vivo como ${client.user.tag}`);
 
-  try {
-    const buttonChannel = await client.channels.fetch(BUTTON_CHANNEL_ID);
-    if (!buttonChannel) return console.log('❌ No encontré el canal del botón');
+  const buttonChannel = await client.channels.fetch(BUTTON_CHANNEL_ID);
+  if (!buttonChannel) return console.log('❌ Canal botón no encontrado');
 
-    const button = new ButtonBuilder()
-      .setCustomId('solicitar_abrir_server')
-      .setLabel('🟩 Solicitar abrir servidor')
-      .setStyle(ButtonStyle.Success);
+  const button = new ButtonBuilder()
+    .setCustomId('solicitar_abrir_server')
+    .setLabel('🟩 Solicitar abrir servidor')
+    .setStyle(ButtonStyle.Success);
 
-    const row = new ActionRowBuilder().addComponents(button);
+  const row = new ActionRowBuilder().addComponents(button);
 
-    // 🔍 Revisar si ya existe un botón enviado por el bot
-    const messages = await buttonChannel.messages.fetch({ limit: 20 });
+  let buttonMessageId = null;
 
-    const existing = messages.find(
-      msg =>
-        msg.author.id === client.user.id &&
-        msg.components.length > 0
-    );
+  // 🔍 1️⃣ Revisar si ya existe archivo guardado
+  if (fs.existsSync(BUTTON_DATA_FILE)) {
+    const data = JSON.parse(fs.readFileSync(BUTTON_DATA_FILE));
+    buttonMessageId = data.messageId;
 
-    if (existing) {
-      console.log('⚠️ Ya existe un botón en abrir-servidor, no envío otro.');
-    } else {
-      await buttonChannel.send({
-        content: '🐥 **¿Quieres que se abra el servidor de Aternos?**\nPresiona el botón de abajo 👇',
-        components: [row]
-      });
-
-      console.log('✅ Botón enviado al canal abrir-servidor');
+    try {
+      await buttonChannel.messages.fetch(buttonMessageId);
+      console.log('✅ Botón ya existe, no se crea otro.');
+      return;
+    } catch {
+      console.log('⚠️ El botón guardado ya no existe, se creará uno nuevo.');
     }
-
-  } catch (err) {
-    console.error('❌ Error enviando el botón:', err);
   }
+
+  // 2️⃣ Si no existe, crear botón
+  const sentMessage = await buttonChannel.send({
+    content: '🐥 **¿Quieres que se abra el servidor de Aternos?**\nPresiona el botón de abajo 👇',
+    components: [row]
+  });
+
+  // 💾 Guardar ID del mensaje
+  fs.writeFileSync(BUTTON_DATA_FILE, JSON.stringify({
+    messageId: sentMessage.id
+  }));
+
+  console.log('✅ Botón creado y guardado correctamente.');
 });
 
 client.on(Events.InteractionCreate, async interaction => {
@@ -69,7 +74,6 @@ client.on(Events.InteractionCreate, async interaction => {
   const now = Date.now();
   const cooldownTime = COOLDOWN_MINUTES * 60 * 1000;
 
-  // 🔵 Cooldown
   if (cooldowns.has(userId)) {
     const lastTime = cooldowns.get(userId);
     const remaining = cooldownTime - (now - lastTime);
@@ -86,14 +90,13 @@ client.on(Events.InteractionCreate, async interaction => {
 
       return interaction.reply({
         embeds: [cooldownEmbed],
-        flags: 64 // nuevo sistema ephemeral
+        flags: 64
       });
     }
   }
 
   cooldowns.set(userId, now);
 
-  // 🟢 Enviar embed al canal de estatus
   const statusChannel = await client.channels.fetch(STATUS_CHANNEL_ID);
 
   const embed = new EmbedBuilder()
@@ -111,13 +114,10 @@ client.on(Events.InteractionCreate, async interaction => {
     embeds: [embed]
   });
 
-  // ✅ Confirmación privada
   await interaction.reply({
     content: '✅ Tu solicitud fue enviada correctamente.',
     flags: 64
   });
 });
 
-// 🔑 LOGIN SIEMPRE AL FINAL
 client.login(process.env.TOKEN);
-
