@@ -1,73 +1,111 @@
-const fs = require('fs');
-const {
-  Client,
-  GatewayIntentBits,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  Events
-} = require('discord.js');
+const { 
+  Client, 
+  GatewayIntentBits, 
+  ActionRowBuilder, 
+  ButtonBuilder, 
+  ButtonStyle, 
+  EmbedBuilder 
+} = require("discord.js");
 
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
+    GatewayIntentBits.GuildMessages
   ]
 });
 
-// ⚠️ CAMBIA ESTO POR EL ID DE TU CANAL
-const CHANNEL_ID = "1470936514463662354";
+const TOKEN = process.env.TOKEN;
 
-client.once('ready', async () => {
-  console.log(`🐥 Pollito está vivo como ${client.user.tag}`);
+const CHANNEL_BOTON_ID = "1470936514463662354";
+const CHANNEL_SOLICITUDES_ID = "1470980480055775242";
 
-  const buttonChannel = await client.channels.fetch(CHANNEL_ID);
-  if (!buttonChannel) return console.log("❌ Canal no encontrado");
+const cooldowns = new Map();
+const COOLDOWN_TIME = 30 * 60; // 30 minutos
 
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId('abrir_servidor')
-      .setLabel('🚀 Abrir Servidor')
-      .setStyle(ButtonStyle.Success)
+client.once("clientReady", async () => {
+  console.log(`🐥 Bot activo como ${client.user.tag}`);
+
+  const channel = await client.channels.fetch(CHANNEL_BOTON_ID);
+  if (!channel) return console.log("❌ Canal botón no encontrado.");
+
+  const messages = await channel.messages.fetch({ limit: 10 });
+
+  const alreadyExists = messages.some(msg =>
+    msg.components.length > 0 &&
+    msg.components[0].components[0].customId === "boton_explorar"
   );
 
-  try {
-    // 🔍 Buscar si ya existe un botón anterior
-    const messages = await buttonChannel.messages.fetch({ limit: 20 });
-
-    const existingMessage = messages.find(
-      msg =>
-        msg.author.id === client.user.id &&
-        msg.components.length > 0
-    );
-
-    if (existingMessage) {
-      console.log("✅ El botón ya existe, no se enviará otro.");
-    } else {
-      await buttonChannel.send({
-        content: '🐥 **¿Quieres que se abra el servidor de Aternos?**\nPresiona el botón de abajo 👇',
-        components: [row]
-      });
-
-      console.log("✅ Botón enviado al canal.");
-    }
-
-  } catch (error) {
-    console.error("❌ Error al enviar/verificar botón:", error);
+  if (alreadyExists) {
+    console.log("✅ El botón ya existe.");
+    return;
   }
+
+  const embed = new EmbedBuilder()
+    .setTitle("🌍 Solicitar que el servidor abra")
+    .setDescription("Presiona el botón para enviar una solicitud para que el servidor se abra.")
+    .setColor("#57F287");
+
+  const button = new ButtonBuilder()
+    .setCustomId("boton_explorar")
+    .setLabel("$1.00 por explorar")
+    .setStyle(ButtonStyle.Primary);
+
+  const row = new ActionRowBuilder().addComponents(button);
+
+  await channel.send({ embeds: [embed], components: [row] });
+  console.log("✅ Botón enviado.");
 });
 
-// 🎯 Cuando alguien presiona el botón
-client.on(Events.InteractionCreate, async interaction => {
+client.on("interactionCreate", async interaction => {
   if (!interaction.isButton()) return;
+  if (interaction.customId !== "boton_explorar") return;
 
-  if (interaction.customId === 'abrir_servidor') {
-    await interaction.reply({
-      content: '🚀 Iniciando servidor... (aquí va tu lógica de Aternos)',
-      ephemeral: true
-    });
+  const userId = interaction.user.id;
+  const now = Date.now();
+
+  if (cooldowns.has(userId)) {
+    const expiration = cooldowns.get(userId) + COOLDOWN_TIME * 1000;
+
+    if (now < expiration) {
+      const remainingMinutes = Math.ceil((expiration - now) / 60000);
+
+      const cooldownEmbed = new EmbedBuilder()
+        .setTitle("⏳ Cooldown Activo")
+        .setDescription(`Debes esperar **${remainingMinutes} minutos** antes de volver a enviar otra solicitud.`)
+        .setColor("#ED4245");
+
+      return interaction.reply({
+        embeds: [cooldownEmbed],
+        ephemeral: true
+      });
+    }
   }
+
+  cooldowns.set(userId, now);
+
+  const solicitudChannel = await client.channels.fetch(CHANNEL_SOLICITUDES_ID);
+  if (!solicitudChannel) return;
+
+  const solicitudEmbed = new EmbedBuilder()
+    .setTitle("📢 Nueva Solicitud")
+    .setDescription(
+      `👤 Solicitado por: ${interaction.user}\n\n` +
+      `📌 Estado: **Esperando que el servidor abra**`
+    )
+    .setColor("#5865F2")
+    .setTimestamp();
+
+  await solicitudChannel.send({
+    content: "@here",
+    embeds: [solicitudEmbed]
+  });
+
+  await interaction.reply({
+    content: "✅ Tu solicitud fue enviada correctamente.",
+    ephemeral: true
+  });
+
+  console.log(`📨 ${interaction.user.tag} hizo una solicitud.`);
 });
 
-client.login(process.env.TOKEN);
+client.login(TOKEN);
