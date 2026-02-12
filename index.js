@@ -17,7 +17,7 @@ const client = new Client({
 });
 
 // ⚠️ CAMBIA ESTO POR EL ID DE TU CANAL
-const CHANNEL_ID = "AQUI_EL_ID_DEL_CANAL";
+const CHANNEL_ID = "1470936514463662354";
 
 client.once('ready', async () => {
   console.log(`🐥 Pollito está vivo como ${client.user.tag}`);
