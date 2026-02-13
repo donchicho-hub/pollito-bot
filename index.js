@@ -44,8 +44,7 @@ client.once("clientReady", async () => {
   const embed = new EmbedBuilder()
     .setTitle("🌍 Solicitar que el servidor abra")
     .setDescription("Presiona el botón para enviar una solicitud.")
-    .setColor("#2ECC71") // Verde elegante
-    .setFooter({ text: "Sistema automático de solicitudes" });
+    .setColor("#2ECC71"); // Verde elegante
 
   // 🟢 BOTÓN VERDE
   const button = new ButtonBuilder()
