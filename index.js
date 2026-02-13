@@ -58,8 +58,8 @@ client.once("clientReady", async () => {
       "**Java**\n" +
       "IP: `ChichoVerse.aternos.me:63137`\n\n" +
       "**Bedrock**\n" +
-      "IP: `ChichoVerse.aternos.me`\n\n" +
-      "Puerto: `63137`\n", // 👈 SOLO un \n aquí
+      "IP: `ChichoVerse.aternos.me`\n" +
+      "Puerto: `63137`\n\n", // 👈 SOLO un \n aquí
     embeds: [embed],
     components: [row]
   });
