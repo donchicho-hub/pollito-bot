@@ -59,7 +59,8 @@ client.once("clientReady", async () => {
       "IP: `ChichoVerse.aternos.me:63137`\n\n" +
       "**Bedrock**\n" +
       "IP: `ChichoVerse.aternos.me`\n" +
-      "Puerto: `63137`",
+      "Puerto: `63137`" +
+      "━━━━━━━━━━━━━━━━━━",
     embeds: [embed],
     components: [row]
   });
