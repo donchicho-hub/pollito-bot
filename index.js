@@ -40,13 +40,11 @@ client.once("clientReady", async () => {
     return;
   }
 
-  // ✨ NUEVO EMBED
   const embed = new EmbedBuilder()
     .setTitle("🌍 Solicitar que el servidor abra")
     .setDescription("Presiona el botón para enviar una solicitud.")
-    .setColor("#2ECC71"); // Verde elegante
+    .setColor("#2ECC71");
 
-  // 🟢 BOTÓN VERDE
   const button = new ButtonBuilder()
     .setCustomId("boton_explorar")
     .setLabel("🟩 Abrir el servidor")
@@ -55,16 +53,20 @@ client.once("clientReady", async () => {
   const row = new ActionRowBuilder().addComponents(button);
 
   await channel.send({
-  content:
-    "**🟢 Información del servidor**\n\n" +
-    "**Java**\n" +
-    "IP: `ChichoVerse.aternos.me:63137`\n\n" +
-    "**Bedrock**\n" +
-    "IP: `ChichoVerse.aternos.me`\n" +
-    "Puerto: `63137`",
-  embeds: [embed],
-  components: [row]
-});
+    content:
+      "**🟢 Información del servidor**\n\n" +
+      "**Java**\n" +
+      "IP: `ChichoVerse.aternos.me:63137`\n\n" +
+      "**Bedrock**\n" +
+      "IP: `ChichoVerse.aternos.me`\n" +
+      "Puerto: `63137`",
+    embeds: [embed],
+    components: [row]
+  });
+
+  console.log("✅ Botón enviado.");
+}); // 👈 ESTA LLAVE FALTABA
+
 
 client.on("interactionCreate", async interaction => {
   if (!interaction.isButton()) return;
@@ -119,3 +121,4 @@ client.on("interactionCreate", async interaction => {
 });
 
 client.login(TOKEN);
+
