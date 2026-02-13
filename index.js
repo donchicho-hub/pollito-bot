@@ -54,8 +54,16 @@ client.once("clientReady", async () => {
 
   const row = new ActionRowBuilder().addComponents(button);
 
-  await channel.send({ embeds: [embed], components: [row] });
-  console.log("✅ Botón enviado.");
+  await channel.send({
+  content:
+    "**🟢 Información del servidor**\n\n" +
+    "**Java**\n" +
+    "IP: `ChichoVerse.aternos.me:63137`\n\n" +
+    "**Bedrock**\n" +
+    "IP: `ChichoVerse.aternos.me`\n" +
+    "Puerto: `63137`",
+  embeds: [embed],
+  components: [row]
 });
 
 client.on("interactionCreate", async interaction => {
