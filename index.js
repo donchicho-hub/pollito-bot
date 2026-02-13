@@ -40,15 +40,18 @@ client.once("clientReady", async () => {
     return;
   }
 
+  // ✨ NUEVO EMBED
   const embed = new EmbedBuilder()
     .setTitle("🌍 Solicitar que el servidor abra")
-    .setDescription("Presiona el botón para enviar una solicitud para que el servidor se abra.")
-    .setColor("#57F287");
+    .setDescription("Presiona el botón para enviar una solicitud.")
+    .setColor("#2ECC71") // Verde elegante
+    .setFooter({ text: "Sistema automático de solicitudes" });
 
+  // 🟢 BOTÓN VERDE
   const button = new ButtonBuilder()
     .setCustomId("boton_explorar")
-    .setLabel("$1.00 por explorar")
-    .setStyle(ButtonStyle.Primary);
+    .setLabel("🟩 Abrir el servidor")
+    .setStyle(ButtonStyle.Success);
 
   const row = new ActionRowBuilder().addComponents(button);
 
